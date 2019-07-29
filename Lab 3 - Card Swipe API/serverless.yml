@@ -1,0 +1,90 @@
+
+service: rutgers-card-swipe
+
+provider:
+  name: aws
+  runtime: python3.7
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-2'}
+  # Optional
+  # apiKeys:
+  #   - mykey
+
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "dynamodb:PutItem"
+        - "dynamodb:Query"
+      Resource:
+        Fn::GetAtt: [ StudentIDTable, Arn ]
+
+functions:
+  getStudent:
+    handler: app.get_student
+    description: Returns a students First and Last name when given a student ID
+    memorySize: 256
+    timeout: 3
+    tags:
+      service: ${self:service}
+    environment:
+      DDB_TABLE: !Ref StudentIDTable
+    events:
+      - http:
+          path: /
+          method: get
+          # If using API keys, uncomment below
+          # private: true
+          authorizer: 
+            name: apiAuthorizer
+            identitySource: method.request.header.customheader1, method.request.header.customheader2
+            type: request
+
+  addStudent:
+    handler: app.add_student
+    description: Adds a student to the Student ID table
+    memorySize: 256
+    timeout: 3
+    tags:
+      service: ${self:service}
+    environment:
+      DDB_TABLE: !Ref StudentIDTable
+    events:
+      - http:
+          path: /
+          method: put
+          # If using API keys, uncomment below
+          # private: true
+          authorizer: 
+            name: apiAuthorizer
+            identitySource: method.request.header.customheader1, method.request.header.customheader2
+            type: request
+
+  apiAuthorizer:
+    handler: authorizer.lambda_handler
+    description: Authorizes requests for the Card Swipe API
+    memorySize: 128
+    timeout: 3
+    tags:
+      service: ${self:service}
+    environment:
+      customheader1value: ${ssm:/sls/${self:provider.stage}/${self:service}/customheader1~true}
+      customheader2value: ${ssm:/sls/${self:provider.stage}/${self:service}/customheader2~true}
+
+resources:
+  Resources:
+    StudentIDTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:service}-${opt:stage, self:provider.stage}
+        KeySchema:
+          - AttributeName: student_id
+            KeyType: HASH
+        AttributeDefinitions:
+          - AttributeName: student_id
+            AttributeType: S
+        BillingMode: PAY_PER_REQUEST
+        Tags:
+          - Key: service
+            Value: ${self:service}
+          - Key: stage
+            Value: ${opt:stage, self:provider.stage}
