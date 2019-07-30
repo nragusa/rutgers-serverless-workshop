@@ -39,7 +39,7 @@ sls -v
 Your output should look something like:
 ```bash
 $ serverless --version
-1.48.4 (Enterprise Plugin: 1.3.1, Platform SDK: 2.0.3)
+1.48.4 (Enterprise Plugin: 1.3.3, Platform SDK: 2.1.0)
 ```
 That's it! Let's create and deploy our Hello Rutgers API.
 
