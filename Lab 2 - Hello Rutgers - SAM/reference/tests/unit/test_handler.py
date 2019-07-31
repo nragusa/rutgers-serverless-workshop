@@ -18,7 +18,7 @@ def apigw_event():
             "resourcePath": "/{proxy+}",
             "httpMethod": "POST",
             "requestId": "c6af9ac6-7b61-11e6-9a41-93e8deadbeef",
-            "accountId": "removed",
+            "accountId": "123456789012",
             "identity": {
                 "apiKey": "",
                 "userArn": "",
